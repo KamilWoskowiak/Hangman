@@ -1,79 +1,90 @@
 import pygame
 import random
-from words import wordlist as wl
+from words import wordlist
 
 pygame.init()
-pygame.font.init()
-
-width, height = 900, 900
-screen = pygame.display.set_mode((width,height))
-pygame.display.set_caption("Hangman")
-
-screen.fill((255,255,255))
-pygame.display.flip()
-
-FPS = 30
 clock = pygame.time.Clock()
 
-word = random.choice(wl)
+
+width, height = 1480, 800
+background_colour = (255,255,255)
+
+screen = pygame.display.set_mode((width, height))
+
+pygame.display.set_caption('Hangman')
+screen.fill(background_colour)
+
+# Hangman imgs
+
+IMAGES = []
+level = 0
+
+for x in range(7):
+  image = pygame.image.load(f'img/Hangman{x}.png').convert()
+  IMAGES.append(image)
+
+pygame.display.flip()
+
+# Buttons
+
+size = 60
+distance_x = 400
+distance_y = 570
+boxes = []
+
+for row in range(2):
+  for col in range(13):
+    x = ((col * 20) + 20) + (size * col) + distance_x
+    y = ((row * 20) + 20) + (size * row) + distance_y
+    box = pygame.Rect(x,y,size,size)
+    boxes.append(box)
+
+buttons = []
+Characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+i = 0
+
+for box in boxes:
+  button = [box,Characters[i]]
+  buttons.append(button)
+  i += 1
+
+# Word
+word = random.choice(wordlist)
+guessed_list = []
 print(word)
 
-def get_word():
-    return word
+# Font
+font = pygame.font.SysFont('arial', 30)
+wordfont = pygame.font.SysFont('arial', 100)
 
-def new_game():
-    screen.fill((255, 255, 255))
-    pygame.display.flip()
-    pygame.draw.rect(screen, (0,0,0), (50,700,300,15))
-    pygame.draw.rect(screen, (0, 0, 0), (200, 0, 15, 700))
-    pygame.draw.rect(screen, (0, 0, 0), (200, 0, 300, 15))
-    pygame.draw.rect(screen, (0, 0, 0), (500, 0, 15, 40))
-    pygame.display.update()
-    unknown_word = ""
-    for x in get_word():
-        unknown_word += "_ "
-    font = pygame.font.Font('freesansbold.ttf', 100)
-    text = font.render(unknown_word, False, (220, 20, 60))
-    screen.blit(text, (100, 750))
-    pygame.display.update()
+# Game
 
-def draw_body(error):
-    if error == 0:
-        pygame.draw.circle(screen, (220,20,60), (505,100), 65)
-        pygame.display.update()
-    elif error == 1:
-        pygame.draw.line(screen, (220,20,60), (505,100), (505,350),15)
-        pygame.display.update()
-    elif error == 2:
-        pygame.draw.line(screen, (220,20,60), (600,200), (505,250),15)
-        pygame.display.update()
-    elif error == 3:
-        pygame.draw.line(screen, (220,20,60), (400,200), (505,250),15)
-        pygame.display.update()
-    elif error == 4:
-        pygame.draw.line(screen, (220,20,60), (400,500), (505,350),15)
-        pygame.display.update()
-    elif error == 5:
-        pygame.draw.line(screen, (220,20,60), (610,500), (505,350),15)
-        font = pygame.font.Font('freesansbold.ttf', 100)
-        text = font.render(get_word(), False, (220,20,60))
-        screen.blit(text, (275,500))
-        pygame.display.update()
+running = True
+while running:
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      running = False
 
-new_game()
-draw_body(0)
-draw_body(1)
-draw_body(2)
-draw_body(3)
-draw_body(4)
-draw_body(5)
+  screen.blit(IMAGES[level], (-100,0))
 
-run = True
+  for box in boxes:
+    pygame.draw.rect(screen,(0,0,0), box, 5)
 
-while run:
-    clock.tick(FPS)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
+  for box, letter in buttons:
+    text = font.render(letter, True, (0,0,0))
+    rect = text.get_rect(center = (box.x + 30, box.y + 30))
+    screen.blit(text, rect)
 
+  display_text = ""
 
+  for letter in word:
+    if letter in guessed_list:
+      display_text += letter + " "
+    else:
+      display_text += "_ "
+
+  display = wordfont.render(display_text, True, (0,0,0))
+  screen.blit(display, (600, 250))
+
+  pygame.display.update()
+  clock.tick(30)
