@@ -1,90 +1,124 @@
 import pygame
+from pygame.locals import *
 import random
 from words import wordlist
 
+def draw_btns(buttons):
+    for button, letter in buttons:
+        btn_text = fontbtn.render(letter, True, black)
+        btn_text_rect = btn_text.get_rect(center=(button.x + 30, button.y + 30))
+        pygame.draw.rect(screen, black, button, 2)
+        screen.blit(btn_text, btn_text_rect)
+
+
+def display_guess():
+    display_word = ""
+
+    for letter in word:
+        if letter in guessed:
+            display_word += f"{letter} "
+        else:
+            display_word += "_ "
+
+    text = font.render(display_word, True, black)
+    screen.blit(text, (540, 250))
+
+
 pygame.init()
-clock = pygame.time.Clock()
-
-
 width, height = 1480, 800
-background_colour = (255,255,255)
-
 screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Hangman")
 
-pygame.display.set_caption('Hangman')
-screen.fill(background_colour)
+game_over = False
 
-# Hangman imgs
+# colors
+white = (255, 255, 255)
+black = (0, 0, 0)
 
-IMAGES = []
+# images
+images = []
 level = 0
 
-for x in range(7):
-  image = pygame.image.load(f'img/Hangman{x}.png').convert()
-  IMAGES.append(image)
+for i in range(7):
+    image = pygame.image.load(f"img/hangman{i}.png").convert()
+    images.append(image)
 
-pygame.display.flip()
-
-# Buttons
-
+# buttons
 size = 60
 distance_x = 400
 distance_y = 570
-boxes = []
+BOXES = []
 
 for row in range(2):
-  for col in range(13):
-    x = ((col * 20) + 20) + (size * col) + distance_x
-    y = ((row * 20) + 20) + (size * row) + distance_y
-    box = pygame.Rect(x,y,size,size)
-    boxes.append(box)
+    for col in range(13):
+        x = ((col * 20) + 20) + (size * col) + distance_x
+        y = ((row * 20) + 20) + (size * row) + distance_y
+        box = pygame.Rect(x, y, size, size)
+        BOXES.append(box)
 
 buttons = []
-Characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 i = 0
 
-for box in boxes:
-  button = [box,Characters[i]]
-  buttons.append(button)
-  i += 1
+for box in BOXES:
+    button = ([box, characters[i]])
+    buttons.append(button)
+    i += 1
 
-# Word
-word = random.choice(wordlist)
-guessed_list = []
-print(word)
+# fonts
+fontbtn = pygame.font.SysFont("arial", 30)
+font = pygame.font.SysFont("arial", 100)
 
-# Font
-font = pygame.font.SysFont('arial', 30)
-wordfont = pygame.font.SysFont('arial', 100)
-
-# Game
+# word
+word = random.choice(wordlist).upper()
+guessed = []
 
 running = True
 while running:
-  for event in pygame.event.get():
-    if event.type == pygame.QUIT:
-      running = False
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            running = False
+            pygame.quit()
 
-  screen.blit(IMAGES[level], (-100,0))
+        if event.type == MOUSEBUTTONDOWN:
+            clicked_pos = event.pos
 
-  for box in boxes:
-    pygame.draw.rect(screen,(0,0,0), box, 5)
+            for button, letter in buttons:
+                if button.collidepoint(clicked_pos):
+                    guessed.append(letter)
 
-  for box, letter in buttons:
-    text = font.render(letter, True, (0,0,0))
-    rect = text.get_rect(center = (box.x + 30, box.y + 30))
-    screen.blit(text, rect)
+                    if letter not in word:
+                        level += 1
 
-  display_text = ""
+                    if level == 6:
+                        game_over = True
 
-  for letter in word:
-    if letter in guessed_list:
-      display_text += letter + " "
+                    buttons.remove([button, letter])
+
+    screen.fill(white)
+    screen.blit(images[level], (-100, 0))
+    draw_btns(buttons)
+    display_guess()
+
+    won = True
+
+    for letter in word:
+        if letter not in guessed:
+            won = False
+
+    if won:
+        game_over = True
+        display_text = "YOU WON - " + word
     else:
-      display_text += "_ "
+        display_text = "YOU LOST - " + word
 
-  display = wordfont.render(display_text, True, (0,0,0))
-  screen.blit(display, (600, 250))
+    pygame.display.update()
 
-  pygame.display.update()
-  clock.tick(30)
+    if game_over:
+        screen.fill(white)
+        game_over_text = font.render(display_text, True, black)
+        game_over_text_rect = game_over_text.get_rect(center=(width // 2, height // 2))
+        screen.blit(game_over_text, game_over_text_rect)
+        pygame.display.update()
+        pygame.time.delay(1000)
+        pygame.quit()
